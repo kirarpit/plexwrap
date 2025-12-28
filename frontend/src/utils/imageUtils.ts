@@ -4,7 +4,7 @@
 
 /**
  * Convert a Plex thumb path to a proxied URL via the backend API
- * The backend proxies images from Plex so the frontend doesn't need direct access
+ * The backend proxies images through Tautulli so the frontend doesn't need direct access
  */
 export const getPlexImageUrl = async (thumbPath: string | null | undefined): Promise<string | null> => {
   if (!thumbPath) return null;

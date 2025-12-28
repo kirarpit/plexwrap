@@ -2,7 +2,7 @@ from typing import List, Dict, Optional
 from datetime import datetime, timedelta
 from collections import Counter, defaultdict
 import asyncio
-from clients import PlexClient, TautulliClient, OverseerrClient, ImageGenerationClient
+from clients import TautulliClient, ImageGenerationClient
 from clients.llm_client import LLMClient
 from models import (
     WrapData,
@@ -19,11 +19,7 @@ from config import Settings
 class WrapAnalyzer:
     def __init__(self, settings: Settings):
         self.settings = settings
-        self.plex = PlexClient(settings.plex_url, settings.plex_token)
         self.tautulli = TautulliClient(settings.tautulli_url, settings.tautulli_api_key)
-        self.overseerr = OverseerrClient(
-            settings.overseerr_url, settings.overseerr_api_key
-        )
         self.llm = LLMClient(
             api_key=settings.openai_api_key,
             enabled=settings.use_llm,
@@ -188,16 +184,16 @@ class WrapAnalyzer:
                     item_genres = [
                         g.strip() for g in item_genres.split(",") if g.strip()
                     ]
-                # If still empty, try to fetch from Plex using rating_key
+                # If still empty, try to fetch from Tautulli using rating_key
                 if not item_genres and item.get("rating_key"):
                     try:
-                        plex_metadata = self.plex.get_metadata(
+                        metadata = self.tautulli.get_metadata(
                             str(item.get("rating_key"))
                         )
-                        if plex_metadata and plex_metadata.get("genres"):
-                            item_genres = plex_metadata.get("genres", [])
+                        if metadata and metadata.get("genres"):
+                            item_genres = metadata.get("genres", [])
                     except Exception:
-                        pass  # Silently fail if Plex fetch fails
+                        pass  # Silently fail if metadata fetch fails
 
                 for genre in item_genres:
                     if genre:
@@ -231,16 +227,16 @@ class WrapAnalyzer:
                     item_actors = [
                         a.strip() for a in item_actors.split(",") if a.strip()
                     ]
-                # If still empty, try to fetch from Plex using rating_key
+                # If still empty, try to fetch from Tautulli using rating_key
                 if not item_actors and item.get("rating_key"):
                     try:
-                        plex_metadata = self.plex.get_metadata(
+                        metadata = self.tautulli.get_metadata(
                             str(item.get("rating_key"))
                         )
-                        if plex_metadata and plex_metadata.get("actors"):
-                            item_actors = plex_metadata.get("actors", [])
+                        if metadata and metadata.get("actors"):
+                            item_actors = metadata.get("actors", [])
                     except Exception:
-                        pass  # Silently fail if Plex fetch fails
+                        pass  # Silently fail if metadata fetch fails
 
                 for actor in item_actors[:5]:  # Top 5 actors
                     if actor:
@@ -274,16 +270,16 @@ class WrapAnalyzer:
                     item_directors = [
                         d.strip() for d in item_directors.split(",") if d.strip()
                     ]
-                # If still empty, try to fetch from Plex using rating_key
+                # If still empty, try to fetch from Tautulli using rating_key
                 if not item_directors and item.get("rating_key"):
                     try:
-                        plex_metadata = self.plex.get_metadata(
+                        metadata = self.tautulli.get_metadata(
                             str(item.get("rating_key"))
                         )
-                        if plex_metadata and plex_metadata.get("directors"):
-                            item_directors = plex_metadata.get("directors", [])
+                        if metadata and metadata.get("directors"):
+                            item_directors = metadata.get("directors", [])
                     except Exception:
-                        pass  # Silently fail if Plex fetch fails
+                        pass  # Silently fail if metadata fetch fails
 
                 for director in item_directors:
                     if director:
@@ -997,36 +993,6 @@ class WrapAnalyzer:
             history, self.settings.start_date, self.settings.end_date
         )
 
-        # Get Overseerr data
-        overseerr_users = self.overseerr.get_users()
-        overseerr_user = next(
-            (
-                u
-                for u in overseerr_users
-                if u.get("username") == username or u.get("email") == username
-            ),
-            None,
-        )
-        overseerr_data = {}
-
-        if overseerr_user:
-            overseerr_data = self.overseerr.get_user_stats(overseerr_user["id"])
-            requests = self.overseerr.get_user_requests(
-                user_id=overseerr_user["id"],
-                start_date=self.settings.start_date,
-                end_date=self.settings.end_date,
-            )
-
-            # Find most requested genre
-            request_genres = Counter()
-            for req in requests:
-                for genre in req.get("media", {}).get("genres", []):
-                    request_genres[genre.get("name", "")] += 1
-            if request_genres:
-                overseerr_data["most_requested_genre"] = request_genres.most_common(1)[
-                    0
-                ][0]
-
         # Get top content
         top_content = self.get_top_content(history, limit=10)
 
@@ -1119,7 +1085,6 @@ class WrapAnalyzer:
             "time_of_day": analysis.get("time_of_day", {}),
             "day_of_week": analysis.get("day_of_week", {}),
             "consistency": analysis.get("consistency", {}),
-            "overseerr_data": overseerr_data,
         }
 
         return raw_data
@@ -1215,13 +1180,9 @@ class WrapAnalyzer:
             platforms=platforms,
             longest_binge=raw_data.get("longest_binge"),
             binge_sessions=raw_data.get("binge_sessions", [])[:10],
-            total_requests=raw_data.get("overseerr_data", {}).get("total_requests", 0),
-            approved_requests=raw_data.get("overseerr_data", {}).get(
-                "approved_requests", 0
-            ),
-            most_requested_genre=raw_data.get("overseerr_data", {}).get(
-                "most_requested_genre"
-            ),
+            total_requests=0,
+            approved_requests=0,
+            most_requested_genre=None,
             fun_facts=[],  # Empty - cards replace this
             llm_card_descriptions=None,  # Not used anymore
             cards=cards,  # LLM-generated card deck
@@ -1259,36 +1220,6 @@ class WrapAnalyzer:
             history, self.settings.start_date, self.settings.end_date
         )
 
-        # Get Overseerr data
-        overseerr_users = self.overseerr.get_users()
-        overseerr_user = next(
-            (
-                u
-                for u in overseerr_users
-                if u.get("username") == username or u.get("email") == username
-            ),
-            None,
-        )
-        overseerr_data = {}
-
-        if overseerr_user:
-            overseerr_data = self.overseerr.get_user_stats(overseerr_user["id"])
-            requests = self.overseerr.get_user_requests(
-                user_id=overseerr_user["id"],
-                start_date=self.settings.start_date,
-                end_date=self.settings.end_date,
-            )
-
-            # Find most requested genre
-            request_genres = Counter()
-            for req in requests:
-                for genre in req.get("media", {}).get("genres", []):
-                    request_genres[genre.get("name", "")] += 1
-            if request_genres:
-                overseerr_data["most_requested_genre"] = request_genres.most_common(1)[
-                    0
-                ][0]
-
         # Get top content
         top_content = self.get_top_content(history, limit=10)
 
@@ -1317,9 +1248,9 @@ class WrapAnalyzer:
             platforms=analysis.get("platforms", [])[:5],
             longest_binge=longest_binge,
             binge_sessions=binge_sessions[:10],
-            total_requests=overseerr_data.get("total_requests", 0),
-            approved_requests=overseerr_data.get("approved_requests", 0),
-            most_requested_genre=overseerr_data.get("most_requested_genre"),
+            total_requests=0,
+            approved_requests=0,
+            most_requested_genre=None,
             fun_facts=[],  # Empty - cards replace this
             llm_card_descriptions=None,  # Not used anymore
         )

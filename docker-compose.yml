@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   backend:
     build:
@@ -15,12 +13,8 @@ services:
       - ./data:/app/data
       - ./generated_images:/app/generated_images
     environment:
-      - PLEX_URL=${PLEX_URL:-}
-      - PLEX_TOKEN=${PLEX_TOKEN:-}
       - TAUTULLI_URL=${TAUTULLI_URL:-}
       - TAUTULLI_API_KEY=${TAUTULLI_API_KEY:-}
-      - OVERSEERR_URL=${OVERSEERR_URL:-}
-      - OVERSEERR_API_KEY=${OVERSEERR_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"

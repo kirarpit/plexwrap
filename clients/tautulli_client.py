@@ -180,3 +180,51 @@ class TautulliClient:
             params["user"] = username
 
         return self._request("get_user_platform_stats", params)
+
+    def get_image_url(self, img_path: str, width: Optional[int] = None, height: Optional[int] = None) -> str:
+        """Get the URL for a Plex image proxied through Tautulli
+        
+        Args:
+            img_path: The Plex image path (e.g., /library/metadata/12345/thumb/1234567890)
+            width: Optional width to resize the image
+            height: Optional height to resize the image
+            
+        Returns:
+            Full URL to fetch the image through Tautulli's pms_image_proxy
+        """
+        params = {
+            "apikey": self.api_key,
+            "cmd": "pms_image_proxy",
+            "img": img_path,
+        }
+        if width:
+            params["width"] = width
+        if height:
+            params["height"] = height
+            
+        query_string = "&".join(f"{k}={v}" for k, v in params.items())
+        return f"{self.base_url}/api/v2?{query_string}"
+
+    def get_metadata(self, rating_key: str) -> Optional[Dict]:
+        """Get metadata for a media item by rating_key
+        
+        Uses Tautulli's get_metadata command to fetch genres, actors, directors, etc.
+        """
+        try:
+            params = {"rating_key": rating_key}
+            data = self._request("get_metadata", params)
+            
+            if data:
+                # Extract genres, actors, directors from Tautulli metadata
+                genres = data.get("genres", [])
+                actors = data.get("actors", [])
+                directors = data.get("directors", [])
+                
+                return {
+                    "genres": genres if isinstance(genres, list) else [],
+                    "actors": actors if isinstance(actors, list) else [],
+                    "directors": directors if isinstance(directors, list) else [],
+                }
+        except Exception:
+            pass
+        return None

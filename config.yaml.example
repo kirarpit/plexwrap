@@ -1,7 +1,3 @@
-plex:
-  url: http://localhost:32400
-  token: YOUR_PLEX_TOKEN_HERE
-
 tautulli:
   url: http://localhost:8181
   api_key: YOUR_TAUTULLI_API_KEY_HERE

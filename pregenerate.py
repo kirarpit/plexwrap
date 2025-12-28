@@ -120,7 +120,7 @@ async def collect_raw_data(
     usernames: List[str] | None = None,
     force: bool = False,
 ) -> List[Tuple[str, Dict]]:
-    """Stage 1: Collect raw data from Tautulli/Plex APIs"""
+    """Stage 1: Collect raw data from Tautulli API"""
     print("\n📊 STAGE 1: Collecting raw data...")
 
     if usernames is None:

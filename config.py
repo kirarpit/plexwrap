@@ -7,12 +7,8 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    plex_url: str
-    plex_token: str
     tautulli_url: str
     tautulli_api_key: str
-    overseerr_url: str
-    overseerr_api_key: str
     start_date: Optional[str] = None
     end_date: Optional[str] = None
     openai_api_key: Optional[str] = None
@@ -50,19 +46,11 @@ def load_config():
         end_date = date_to_string(time_range.get("end_date"))
 
         settings = Settings(
-            plex_url=config.get("plex", {}).get("url", os.getenv("PLEX_URL", "")),
-            plex_token=config.get("plex", {}).get("token", os.getenv("PLEX_TOKEN", "")),
             tautulli_url=config.get("tautulli", {}).get(
                 "url", os.getenv("TAUTULLI_URL", "")
             ),
             tautulli_api_key=config.get("tautulli", {}).get(
                 "api_key", os.getenv("TAUTULLI_API_KEY", "")
-            ),
-            overseerr_url=config.get("overseerr", {}).get(
-                "url", os.getenv("OVERSEERR_URL", "")
-            ),
-            overseerr_api_key=config.get("overseerr", {}).get(
-                "api_key", os.getenv("OVERSEERR_API_KEY", "")
             ),
             openai_api_key=config.get("openai", {}).get(
                 "api_key", os.getenv("OPENAI_API_KEY", "")

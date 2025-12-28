@@ -70,7 +70,7 @@ class WrapData(BaseModel):
     longest_binge: Optional[BingeSession] = None
     binge_sessions: List[BingeSession]
 
-    # Overseerr data
+    # Legacy fields (kept for backwards compatibility)
     total_requests: int = 0
     approved_requests: int = 0
     most_requested_genre: Optional[str] = None

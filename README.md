@@ -82,10 +82,6 @@ cp config.yaml.example config.yaml
 Edit `config.yaml`:
 
 ```yaml
-plex:
-  url: http://your-plex-server:32400
-  token: YOUR_PLEX_TOKEN
-
 tautulli:
   url: http://your-tautulli-server:8181
   api_key: YOUR_TAUTULLI_API_KEY

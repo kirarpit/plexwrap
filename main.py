@@ -6,7 +6,7 @@ import uvicorn
 
 from config import load_config
 from analyzer import WrapAnalyzer
-from clients import TautulliClient, PlexClient
+from clients import TautulliClient
 from models import User, WrapData
 from pregenerate import WrapStorage
 
@@ -174,19 +174,19 @@ async def get_token_for_user(username: str):
 
 @app.get("/api/plex-image/{thumb_path:path}")
 async def get_plex_image(thumb_path: str):
-    """Proxy Plex images through the backend"""
+    """Proxy Plex images through Tautulli's pms_image_proxy"""
     import httpx
 
     try:
         settings = get_settings()
         # Remove leading slash if present
         thumb_path = thumb_path.lstrip("/")
-        # Ensure Plex URL doesn't have trailing slash
-        plex_base = settings.plex_url.rstrip("/")
-        # Construct full URL with token
-        full_url = f"{plex_base}/{thumb_path}?X-Plex-Token={settings.plex_token}"
+        
+        # Use Tautulli's pms_image_proxy to fetch images
+        tautulli_base = settings.tautulli_url.rstrip("/")
+        full_url = f"{tautulli_base}/api/v2?apikey={settings.tautulli_api_key}&cmd=pms_image_proxy&img=/{thumb_path}"
 
-        # Fetch the image from Plex
+        # Fetch the image through Tautulli
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(full_url)
             response.raise_for_status()
@@ -204,7 +204,7 @@ async def get_plex_image(thumb_path: str):
             )
     except httpx.HTTPError as e:
         raise HTTPException(
-            status_code=502, detail=f"Failed to fetch image from Plex: {str(e)}"
+            status_code=502, detail=f"Failed to fetch image from Tautulli: {str(e)}"
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to proxy image: {str(e)}")
