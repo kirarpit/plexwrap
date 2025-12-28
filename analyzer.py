@@ -1132,17 +1132,15 @@ class WrapAnalyzer:
         self,
         username: str,
         raw_data: Dict,
-        cross_user_insights: Dict = None,
-        cross_analyzer=None,
         generate_images: bool = True,
     ) -> WrapData:
         """Generate wrap from raw data using LLM to create card deck"""
         user_data = raw_data["user_data"]
         user_id = raw_data["user_id"]
 
-        # Generate LLM card deck (pass empty dict for cross_user_insights since we now use comparative_stats)
+        # Generate LLM card deck
         # comparative_stats should already be in raw_data from pregenerate.py
-        cards = await self.llm.generate_card_deck(raw_data, {})
+        cards = await self.llm.generate_card_deck(raw_data)
 
         # Generate images for each card sequentially if image generation is enabled
         if cards and self.image_gen.enabled and generate_images:

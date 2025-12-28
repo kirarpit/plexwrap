@@ -1,6 +1,4 @@
-import os
-import asyncio
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Optional, Dict, Any, List
 from openai import AsyncOpenAI
 
 
@@ -18,14 +16,14 @@ class LLMClient:
         self.custom_prompt_context = custom_prompt_context
 
     async def generate_card_deck(
-        self, user_data: Dict[str, Any], cross_user_insights: Dict[str, Any]
+        self, user_data: Dict[str, Any]
     ) -> Optional[List[Dict[str, Any]]]:
         """Generate entire card deck for a user with cohesive story"""
         if not self.enabled or not self.client:
             return None
 
         try:
-            prompt = self._build_card_deck_prompt(user_data, cross_user_insights)
+            prompt = self._build_card_deck_prompt(user_data)
 
             # Build context section with optional custom context
             context_lines = ["- This is a shared Plex server with multiple users."]
@@ -150,9 +148,7 @@ Remember to make it fun and playful, not creepy.
         # Default to username
         return username
 
-    def _build_card_deck_prompt(
-        self, user_data: Dict[str, Any], cross_user_insights: Dict[str, Any]
-    ) -> str:
+    def _build_card_deck_prompt(self, user_data: Dict[str, Any]) -> str:
         """Build prompt for generating entire card deck"""
 
         username = user_data.get("username", "User")

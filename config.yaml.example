@@ -1,47 +1,70 @@
+# =============================================================================
+# REQUIRED - Core Service Connection
+# =============================================================================
+
 tautulli:
   url: http://localhost:8181
   api_key: YOUR_TAUTULLI_API_KEY_HERE
+
+# =============================================================================
+# AI FEATURES
+# =============================================================================
 
 # OpenAI API for creative, funny card narratives (highly recommended!)
 openai:
   api_key: YOUR_OPENAI_API_KEY_HERE
   enabled: true  # Set to false to disable LLM features
 
-# Optional: AI image generation for cards (uses Google's Nano Banana Pro model)
+# AI image generation for cards (uses Google's Imagen model)
 # Creates visually stunning card images but can get expensive at scale
 # Get your API key from https://aistudio.google.com/
 image_generation:
   api_key: YOUR_GOOGLE_AI_API_KEY_HERE
   enabled: false  # Set to true to enable AI-generated card images
 
-# Optional: Time range for the wrap (defaults to last year)
+# =============================================================================
+# TIME & LOCATION
+# =============================================================================
+
+# Time range for the wrap (defaults to last year if not specified)
 time_range:
   start_date: 2024-01-01
   end_date: 2024-12-31
 
-# Optional: Timezone for accurate watch time analysis
+# Timezone for accurate watch time analysis
 # Uses IANA timezone names (e.g., "America/New_York", "Europe/London", "Australia/Sydney")
 # If not set, uses server's local timezone
 # timezone: America/Los_Angeles
 
-# Optional: Southern Hemisphere season mapping
+# Southern Hemisphere season mapping
 # Set to true if your users are in the Southern Hemisphere
 # This flips seasons so Dec/Jan/Feb = Summer, Jun/Jul/Aug = Winter
 # southern_hemisphere: false
 
-# Optional: Custom display names for usernames
+# =============================================================================
+# PERSONALIZATION
+# =============================================================================
+
+# Custom display names for usernames
 # Maps Plex usernames to friendly display names for the wrap cards
 # name_mappings:
 #   johndoe123: John
 #   janedoe456: Jane
 
-# Optional: Custom context for the AI to personalize the wrap
+# Custom context for the AI to personalize the wrap
 # This text is injected into the AI prompt to add flavor/context
 # custom_prompt_context: "This is a family Plex server. Keep the tone friendly and fun!"
 
-# Optional: Users to exclude from wrap generation
+# =============================================================================
+# USERS
+# =============================================================================
+
+# Users to exclude from wrap generation
 # Useful for system accounts or users who shouldn't get wraps
 # excluded_users:
 #   - Local
 #   - admin
 
+# Enable cross-user comparison stats (rankings, percentiles, etc.)
+# When enabled, cards can include comparisons to other users on the server
+# cross_user_comparison: true

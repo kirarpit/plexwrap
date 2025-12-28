@@ -177,8 +177,16 @@ async def collect_raw_data(
 
 def compute_cross_user_stats(
     all_raw_data: List[Tuple[str, Dict]],
-) -> Tuple[Dict, CrossUserAnalyzer]:
-    """Compute cross-user comparisons and add comparative stats"""
+    enabled: bool = True,
+) -> Dict:
+    """Compute cross-user comparisons and add comparative stats to raw_data"""
+    if not enabled:
+        print("\n🔍 Cross-user comparisons: DISABLED")
+        # Clear any existing comparative_stats from raw data
+        for username, raw_data in all_raw_data:
+            raw_data["comparative_stats"] = {}
+        return {}
+
     print("\n🔍 Computing cross-user comparisons...")
 
     cross_analyzer = CrossUserAnalyzer()
@@ -194,7 +202,7 @@ def compute_cross_user_stats(
         )
 
     print(f"  → Generated {len(cross_user_insights)} comparison metrics")
-    return cross_user_insights, cross_analyzer
+    return cross_user_insights
 
 
 def save_raw_data(all_raw_data: List[Tuple[str, Dict]], cross_user_insights: Dict):
@@ -255,8 +263,6 @@ async def generate_cards(
     analyzer: WrapAnalyzer,
     storage: WrapStorage,
     all_raw_data: List[Tuple[str, Dict]],
-    cross_user_insights: Dict,
-    cross_analyzer: CrossUserAnalyzer,
     usernames: List[str] | None = None,
     force: bool = False,
     generate_images: bool = True,
@@ -282,8 +288,6 @@ async def generate_cards(
             wrap_data = await analyzer.generate_wrap_from_raw_data(
                 username,
                 raw_data,
-                cross_user_insights,
-                cross_analyzer,
                 generate_images=generate_images,
             )
             if storage.save_wrap(username, wrap_data):
@@ -392,13 +396,13 @@ async def run_pipeline(args):
         all_raw_data, cross_user_insights = load_existing_raw_data(
             set(config.excluded_users)
         )
-        cross_user_insights, cross_analyzer = compute_cross_user_stats(all_raw_data)
+        cross_user_insights = compute_cross_user_stats(
+            all_raw_data, enabled=config.cross_user_comparison
+        )
         await generate_cards(
             analyzer,
             storage,
             all_raw_data,
-            cross_user_insights,
-            cross_analyzer,
             usernames,
             args.force,
             generate_images=False,
@@ -406,22 +410,58 @@ async def run_pipeline(args):
 
     elif args.data_only:
         # Only collect and save raw data
-        all_raw_data = await collect_raw_data(analyzer, usernames, args.force)
-        cross_user_insights, _ = compute_cross_user_stats(all_raw_data)
+        collected_data = await collect_raw_data(analyzer, usernames, args.force)
+
+        # For cross-user comparison, merge with existing cached data
+        if usernames and config.cross_user_comparison:
+            try:
+                existing_data, _ = load_existing_raw_data(set(config.excluded_users))
+                all_data_dict = {u: d for u, d in existing_data}
+                for username, data in collected_data:
+                    all_data_dict[username] = data
+                all_raw_data = list(all_data_dict.items())
+            except FileNotFoundError:
+                all_raw_data = collected_data
+        else:
+            all_raw_data = collected_data
+
+        cross_user_insights = compute_cross_user_stats(
+            all_raw_data, enabled=config.cross_user_comparison
+        )
         save_raw_data(all_raw_data, cross_user_insights)
 
     else:
         # Full pipeline: data → cards → images (if enabled)
         # Note: generate_cards already generates images when generate_images=True (default)
-        all_raw_data = await collect_raw_data(analyzer, usernames, args.force)
-        cross_user_insights, cross_analyzer = compute_cross_user_stats(all_raw_data)
+
+        # Collect data for specified user(s)
+        collected_data = await collect_raw_data(analyzer, usernames, args.force)
+
+        # For cross-user comparison, we need ALL users' data
+        # Load existing cached data and merge with freshly collected data
+        if usernames and config.cross_user_comparison:
+            try:
+                existing_data, _ = load_existing_raw_data(set(config.excluded_users))
+                # Create a dict for easy lookup/update
+                all_data_dict = {u: d for u, d in existing_data}
+                # Update with freshly collected data
+                for username, data in collected_data:
+                    all_data_dict[username] = data
+                all_raw_data = list(all_data_dict.items())
+            except FileNotFoundError:
+                # No existing data, just use what we collected
+                all_raw_data = collected_data
+        else:
+            all_raw_data = collected_data
+
+        cross_user_insights = compute_cross_user_stats(
+            all_raw_data, enabled=config.cross_user_comparison
+        )
         save_raw_data(all_raw_data, cross_user_insights)
         await generate_cards(
             analyzer,
             storage,
             all_raw_data,
-            cross_user_insights,
-            cross_analyzer,
             usernames,
             args.force,
         )

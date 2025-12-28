@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     southern_hemisphere: bool = (
         False  # Set to True for Southern Hemisphere season mapping
     )
+    cross_user_comparison: bool = True  # Enable/disable cross-user comparison stats
 
     class Config:
         env_file = ".env"
@@ -76,6 +77,7 @@ def load_config():
             excluded_users=config.get("excluded_users", []),
             timezone=config.get("timezone", os.getenv("TIMEZONE")),
             southern_hemisphere=config.get("southern_hemisphere", False),
+            cross_user_comparison=config.get("cross_user_comparison", True),
         )
     else:
         settings = Settings()
