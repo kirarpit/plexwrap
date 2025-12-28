@@ -64,14 +64,16 @@ export const StoryCard: React.FC<StoryCardProps> = ({
 
         // Determine API base URL (same logic as api.ts and imageUtils.ts)
         let apiBaseUrl = "";
-        if (port === "" || port === "80") {
-          apiBaseUrl = ""; // Use relative URL - nginx will proxy
-        } else if (port === "8765") {
-          // If accessing via port 8765 (React dev server), always use absolute URL to backend on 8766
-          apiBaseUrl = `http://${hostname}:8766`;
+        // Development ports - need absolute URL to backend
+        const devPorts = ["3000", "5173", "5174", "4200"];
+        
+        if (devPorts.includes(port)) {
+          // For development, use absolute URL to backend
+          apiBaseUrl = `http://${hostname}:8000`;
         } else {
-          // For any other port, use absolute URL with port 8766
-          apiBaseUrl = `http://${hostname}:8766`;
+          // For all other cases (Docker/nginx on any port), use relative URLs
+          // nginx will proxy /api/* requests to the backend
+          apiBaseUrl = "";
         }
 
         // First, get the image modification time for cache-busting

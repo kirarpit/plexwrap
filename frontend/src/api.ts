@@ -13,30 +13,20 @@ const getApiBaseUrl = (): string => {
     const port = window.location.port;
     const hostname = window.location.hostname;
     
-    // If accessing via standard HTTP ports (80 or empty), assume Docker/nginx setup
-    // Use relative URL so nginx can proxy to backend
-    if (port === '' || port === '80') {
-      return ''; // Use relative URL - nginx will proxy
-    }
+    // Development ports - need absolute URL to backend
+    const devPorts = ['3000', '5173', '5174', '4200']; // React, Vite, Angular dev servers
     
-    // If accessing via port 8765:
-    // This is the React dev server port - always use absolute URL to backend on 8766
-    // (nginx proxy only applies when accessing via port 80)
-    if (port === '8765') {
-      return `http://${hostname}:8766`;
-    }
-    
-    // For React dev server on port 3000, try common backend ports
-    if (port === '3000') {
-      // Try port 8000 first (common for manual starts), then 8766
+    if (devPorts.includes(port)) {
+      // For development, try common backend port
       return `http://${hostname}:8000`;
     }
     
-    // For any other port, try port 8000 first, then fallback to 8766
-    return `http://${hostname}:8000`;
+    // For all other cases (Docker/nginx on any port), use relative URLs
+    // nginx will proxy /api/* requests to the backend
+    return '';
   }
   
-  // Fallback to localhost for SSR or other cases - try common ports
+  // Fallback to localhost for SSR or other cases
   return 'http://localhost:8000';
 };
 

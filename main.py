@@ -176,18 +176,21 @@ async def get_token_for_user(username: str):
 async def get_plex_image(thumb_path: str):
     """Proxy Plex images through Tautulli's pms_image_proxy"""
     import httpx
+    from urllib.parse import quote
 
     try:
         settings = get_settings()
         # Remove leading slash if present
         thumb_path = thumb_path.lstrip("/")
-        
+
         # Use Tautulli's pms_image_proxy to fetch images
+        # URL encode the img path to handle special characters
         tautulli_base = settings.tautulli_url.rstrip("/")
-        full_url = f"{tautulli_base}/api/v2?apikey={settings.tautulli_api_key}&cmd=pms_image_proxy&img=/{thumb_path}"
+        img_path = f"/{thumb_path}"
+        full_url = f"{tautulli_base}/api/v2?apikey={settings.tautulli_api_key}&cmd=pms_image_proxy&img={quote(img_path, safe='')}"
 
         # Fetch the image through Tautulli
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
             response = await client.get(full_url)
             response.raise_for_status()
 
@@ -202,6 +205,11 @@ async def get_plex_image(thumb_path: str):
                     "Cache-Control": "public, max-age=86400",  # Cache for 1 day
                 },
             )
+    except httpx.ConnectError as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Cannot connect to Tautulli at {settings.tautulli_url}. If running in Docker, use 'host.docker.internal' instead of 'localhost'. Error: {str(e)}",
+        )
     except httpx.HTTPError as e:
         raise HTTPException(
             status_code=502, detail=f"Failed to fetch image from Tautulli: {str(e)}"

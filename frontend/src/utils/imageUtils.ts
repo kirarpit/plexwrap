@@ -34,18 +34,16 @@ export const getPlexImageUrl = async (thumbPath: string | null | undefined): Pro
   
   let apiBaseUrl = '';
   
-  // If accessing via standard HTTP ports (80 or empty), assume Docker/nginx setup
-  // Use relative URL so nginx can proxy to backend
-  if (port === '' || port === '80') {
-    apiBaseUrl = ''; // Use relative URL - nginx will proxy
-  } else if (port === '8765') {
-    // If accessing via port 8765:
-    // This is the React dev server port - always use absolute URL to backend on 8766
-    // (nginx proxy only applies when accessing via port 80)
-    apiBaseUrl = `http://${hostname}:8766`;
+  // Development ports - need absolute URL to backend
+  const devPorts = ['3000', '5173', '5174', '4200'];
+  
+  if (devPorts.includes(port)) {
+    // For development, use absolute URL to backend
+    apiBaseUrl = `http://${hostname}:8000`;
   } else {
-    // For any other port, use absolute URL with port 8766
-    apiBaseUrl = `http://${hostname}:8766`;
+    // For all other cases (Docker/nginx on any port), use relative URLs
+    // nginx will proxy /api/* requests to the backend
+    apiBaseUrl = '';
   }
   
   // Return the proxied endpoint URL directly
