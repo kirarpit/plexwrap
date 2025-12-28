@@ -1,0 +1,13 @@
+{
+  "name": "plexwrap",
+  "version": "1.0.0",
+  "description": "Plex Wrapped - Year in review for your Plex server",
+  "scripts": {
+    "start": "python -m uvicorn main:app --reload",
+    "dev": "python -m uvicorn main:app --reload --host 0.0.0.0 --port 8766"
+  },
+  "keywords": ["plex", "tautulli", "overseerr", "analytics"],
+  "author": "",
+  "license": "MIT"
+}
+

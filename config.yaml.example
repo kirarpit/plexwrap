@@ -1,0 +1,35 @@
+plex:
+  url: http://localhost:32400
+  token: YOUR_PLEX_TOKEN_HERE
+
+tautulli:
+  url: http://localhost:8181
+  api_key: YOUR_TAUTULLI_API_KEY_HERE
+
+# OpenAI API for creative, funny card narratives (highly recommended!)
+openai:
+  api_key: YOUR_OPENAI_API_KEY_HERE
+  enabled: true  # Set to false to disable LLM features
+
+# Optional: AI image generation for cards (uses Google's Nano Banana Pro model)
+# Creates visually stunning card images but can get expensive at scale
+# Get your API key from https://aistudio.google.com/
+image_generation:
+  api_key: YOUR_GOOGLE_AI_API_KEY_HERE
+  enabled: false  # Set to true to enable AI-generated card images
+
+# Optional: Time range for the wrap (defaults to last year)
+time_range:
+  start_date: 2024-01-01
+  end_date: 2024-12-31
+
+# Optional: Custom display names for usernames
+# Maps Plex usernames to friendly display names for the wrap cards
+# name_mappings:
+#   johndoe123: John
+#   janedoe456: Jane
+
+# Optional: Custom context for the AI to personalize the wrap
+# This text is injected into the AI prompt to add flavor/context
+# custom_prompt_context: "This is a family Plex server. Keep the tone friendly and fun!"
+

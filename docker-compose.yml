@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: plexwrap-backend
+    ports:
+      - "8766:8000"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./wraps:/app/wraps
+      - ./wraps_data:/app/wraps_data
+      - ./data:/app/data
+      - ./generated_images:/app/generated_images
+    environment:
+      - PLEX_URL=${PLEX_URL:-}
+      - PLEX_TOKEN=${PLEX_TOKEN:-}
+      - TAUTULLI_URL=${TAUTULLI_URL:-}
+      - TAUTULLI_API_KEY=${TAUTULLI_API_KEY:-}
+      - OVERSEERR_URL=${OVERSEERR_URL:-}
+      - OVERSEERR_API_KEY=${OVERSEERR_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    networks:
+      - plexwrap-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: plexwrap-frontend
+    ports:
+      - "8765:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - plexwrap-network
+
+networks:
+  plexwrap-network:
+    driver: bridge
+
+volumes:
+  wraps:
+  wraps_data:

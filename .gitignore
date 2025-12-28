@@ -1,0 +1,45 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+tokens.json
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+config.yaml
+.env
+node_modules/
+frontend/build/
+frontend/.env
+.DS_Store
+*.log
+
+# Pre-generated wraps storage
+wraps/
+generated_images/
+
+# Raw data for inspection (data-only mode)
+wraps_data/
+
+# Backup files with personal data
+bkp_wraps/
+
+# Token files (contains user mappings)
+data/tokens.json
+tokens.json
