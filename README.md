@@ -17,12 +17,16 @@ Plex Wrapped uses a three-stage pipeline to create personalized, entertaining wr
 
 ### 1. 📊 Data Collection
 
-Data is collected from **Plex** and **Tautulli**:
+Data is collected from **Tautulli** (which connects to your Plex server):
 
-- **Plex**: User accounts, library metadata, media artwork
-- **Tautulli**: Watch history, session data, playback statistics
+- Watch history and session data
+- Playback statistics and device usage
+- Media metadata (genres, actors, directors)
+- User accounts and artwork (proxied through Tautulli)
 
 The system analyzes each user's viewing patterns including watch time, binge sessions, genre preferences, device usage, and more.
+
+> **Note**: No direct Plex connection required! Tautulli handles everything.
 
 ### 2. 🧠 Insight Generation
 
@@ -67,11 +71,10 @@ For a premium visual experience, each card can be rendered as a unique AI-genera
 
 ### Prerequisites
 
-- Python 3.9+
-- Node.js 16+ (for local development)
 - Docker and Docker Compose (recommended)
-- Access to Plex server
-- Tautulli instance
+- Tautulli instance (connected to your Plex server)
+- Python 3.9+ (for local development only)
+- Node.js 16+ (for local development only)
 
 ### 1. Configure
 
@@ -109,6 +112,11 @@ name_mappings:
 # Optional: Add custom context for AI-generated content
 # This is injected into the AI prompt to personalize the tone
 custom_prompt_context: "This is a family server - keep it fun and friendly!"
+
+# Optional: Users to exclude from wrap generation
+excluded_users:
+  - Local
+  - admin
 ```
 
 ### 2. Run with Docker (Recommended)
@@ -135,12 +143,11 @@ Each user gets a unique token. Tokens are stored in `data/tokens.json`.
 
 ## Getting API Keys
 
-| Service          | Where to Get                                                                                                  |
-| ---------------- | ------------------------------------------------------------------------------------------------------------- |
-| **Plex Token**   | [Plex token finder](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/) |
-| **Tautulli API** | Tautulli → Settings → Web Interface → API                                                                     |
-| **OpenAI API**   | [platform.openai.com](https://platform.openai.com/api-keys)                                                   |
-| **Google AI**    | [aistudio.google.com](https://aistudio.google.com/) (for image generation)                                    |
+| Service          | Where to Get                                                               |
+| ---------------- | -------------------------------------------------------------------------- |
+| **Tautulli API** | Tautulli → Settings → Web Interface → API                                  |
+| **OpenAI API**   | [platform.openai.com](https://platform.openai.com/api-keys)                |
+| **Google AI**    | [aistudio.google.com](https://aistudio.google.com/) (for image generation) |
 
 ## Generating Wraps
 
@@ -244,7 +251,7 @@ docker-compose up -d --build
 docker-compose down
 ```
 
-> **Note**: If Plex/Tautulli run on the host machine, use `host.docker.internal` instead of `localhost` in config.
+> **Note**: If Tautulli runs on the host machine, use `host.docker.internal` instead of `localhost` in config.
 
 ## API Endpoints
 
@@ -265,15 +272,15 @@ docker-compose down
 | ------------------------- | ------------------------------------------------------ |
 | "User not found"          | Ensure username matches exactly as in Tautulli         |
 | Empty data                | Check date range in config includes actual watch dates |
-| "Failed to connect"       | Verify Plex/Tautulli are accessible                    |
+| "Failed to connect"       | Verify Tautulli is accessible from Docker container    |
 | Background images missing | Check browser console, verify API URL                  |
 | Token invalid             | Regenerate wraps: `python pregenerate.py`              |
 
 ### Docker-Specific
 
-- Services on host? Use `host.docker.internal` in config
-- Port conflicts? Check 8765/8766 availability
-- After code changes: `docker-compose up -d --build`
+- Tautulli on host? Use `host.docker.internal` in config URL
+- Port conflicts? Change ports in `docker-compose.yml`
+- After code changes: `docker-compose build --no-cache && docker-compose up -d`
 
 ### Debug Token Issues
 
