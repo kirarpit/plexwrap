@@ -1,7 +1,12 @@
 from typing import List, Dict, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as dt_timezone
 from collections import Counter, defaultdict
 import asyncio
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from backports.zoneinfo import ZoneInfo  # Python < 3.9 fallback
 from clients import TautulliClient, ImageGenerationClient
 from clients.llm_client import LLMClient
 from models import (
@@ -31,6 +36,27 @@ class WrapAnalyzer:
             enabled=settings.use_image_generation,
             name_mappings=settings.name_mappings,
         )
+        # Timezone configuration for accurate time-of-day analysis
+        self.tz = None
+        if settings.timezone:
+            try:
+                self.tz = ZoneInfo(settings.timezone)
+            except Exception as e:
+                print(
+                    f"Warning: Invalid timezone '{settings.timezone}', using server local time: {e}"
+                )
+        # Hemisphere setting for correct season mapping
+        self.southern_hemisphere = settings.southern_hemisphere
+
+    def _convert_timestamp(self, timestamp: int | float) -> datetime:
+        """Convert Unix timestamp to datetime in the configured timezone"""
+        if self.tz:
+            # Convert to UTC first, then to target timezone
+            utc_dt = datetime.fromtimestamp(timestamp, tz=dt_timezone.utc)
+            return utc_dt.astimezone(self.tz)
+        else:
+            # Fall back to server local time
+            return datetime.fromtimestamp(timestamp)
 
     def format_duration(self, minutes: int) -> str:
         """Format minutes into human-readable duration"""
@@ -330,10 +356,10 @@ class WrapAnalyzer:
                 started_ts = item.get("started", 0)
 
                 if date_timestamp:
-                    # Convert Unix timestamp to date string
+                    # Convert Unix timestamp to date string (using configured timezone)
                     try:
                         if isinstance(date_timestamp, (int, float)):
-                            date_obj = datetime.fromtimestamp(date_timestamp)
+                            date_obj = self._convert_timestamp(date_timestamp)
                             date_str = date_obj.strftime("%Y-%m-%d")
                             month_key = date_obj.strftime("%Y-%m")  # YYYY-MM format
 
@@ -359,10 +385,10 @@ class WrapAnalyzer:
                             )
                         watches_by_date[date_str].append(item)
 
-                        # Track time-of-day patterns (using started timestamp)
+                        # Track time-of-day patterns (using started timestamp in configured timezone)
                         if started_ts and isinstance(started_ts, (int, float)):
                             try:
-                                start_dt = datetime.fromtimestamp(started_ts)
+                                start_dt = self._convert_timestamp(started_ts)
                                 hour = start_dt.hour
                                 watches_by_hour[hour]["time"] += watched_min
                                 watches_by_hour[hour]["count"] += 1
@@ -632,15 +658,28 @@ class WrapAnalyzer:
         return best_day
 
     def _get_season(self, month: int) -> str:
-        """Get season name from month (1-12)"""
+        """Get season name from month (1-12), respecting hemisphere setting"""
+        # Northern Hemisphere seasons
         if month in [12, 1, 2]:
-            return "Winter"
+            season = "Winter"
         elif month in [3, 4, 5]:
-            return "Spring"
+            season = "Spring"
         elif month in [6, 7, 8]:
-            return "Summer"
+            season = "Summer"
         else:
-            return "Fall"
+            season = "Fall"
+
+        # Flip seasons for Southern Hemisphere
+        if self.southern_hemisphere:
+            season_flip = {
+                "Winter": "Summer",
+                "Summer": "Winter",
+                "Spring": "Fall",
+                "Fall": "Spring",
+            }
+            season = season_flip[season]
+
+        return season
 
     def _analyze_seasonal_patterns(self, watches_by_month: Dict) -> Dict:
         """Analyze viewing patterns by season"""

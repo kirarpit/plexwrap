@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     name_mappings: Dict[str, str] = {}  # Username to display name mappings
     custom_prompt_context: Optional[str] = None  # Custom context for AI prompts
     excluded_users: list = []  # Users to exclude from wrap generation
+    timezone: Optional[str] = (
+        None  # Timezone for watch time analysis (e.g., "Australia/Sydney", "America/New_York")
+    )
+    southern_hemisphere: bool = (
+        False  # Set to True for Southern Hemisphere season mapping
+    )
 
     class Config:
         env_file = ".env"
@@ -68,6 +74,8 @@ def load_config():
             name_mappings=config.get("name_mappings", {}),
             custom_prompt_context=config.get("custom_prompt_context"),
             excluded_users=config.get("excluded_users", []),
+            timezone=config.get("timezone", os.getenv("TIMEZONE")),
+            southern_hemisphere=config.get("southern_hemisphere", False),
         )
     else:
         settings = Settings()

@@ -19,6 +19,16 @@ time_range:
   start_date: 2024-01-01
   end_date: 2024-12-31
 
+# Optional: Timezone for accurate watch time analysis
+# Uses IANA timezone names (e.g., "America/New_York", "Europe/London", "Australia/Sydney")
+# If not set, uses server's local timezone
+# timezone: America/Los_Angeles
+
+# Optional: Southern Hemisphere season mapping
+# Set to true if your users are in the Southern Hemisphere
+# This flips seasons so Dec/Jan/Feb = Summer, Jun/Jul/Aug = Winter
+# southern_hemisphere: false
+
 # Optional: Custom display names for usernames
 # Maps Plex usernames to friendly display names for the wrap cards
 # name_mappings:
