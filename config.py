@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     use_image_generation: bool = False  # Enable/disable image generation
     name_mappings: Dict[str, str] = {}  # Username to display name mappings
     custom_prompt_context: Optional[str] = None  # Custom context for AI prompts
+    excluded_users: list = []  # Users to exclude from wrap generation
 
     class Config:
         env_file = ".env"
@@ -66,6 +67,7 @@ def load_config():
             end_date=end_date,
             name_mappings=config.get("name_mappings", {}),
             custom_prompt_context=config.get("custom_prompt_context"),
+            excluded_users=config.get("excluded_users", []),
         )
     else:
         settings = Settings()

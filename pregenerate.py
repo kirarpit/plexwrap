@@ -23,8 +23,6 @@ from models import WrapData
 from cross_user_analyzer import CrossUserAnalyzer
 
 
-# Users to exclude from processing
-EXCLUDED_USERS = {"Local", "abhishekgarg765", "nisch91", "ranjanmalav", "kathywu582"}
 DATA_DIR = Path("wraps_data")
 
 
@@ -123,6 +121,9 @@ async def collect_raw_data(
     """Stage 1: Collect raw data from Tautulli API"""
     print("\n📊 STAGE 1: Collecting raw data...")
 
+    # Get excluded users from settings
+    excluded_users = set(analyzer.settings.excluded_users)
+
     if usernames is None:
         # Get all users from Tautulli
         users = analyzer.tautulli.get_users()
@@ -130,14 +131,14 @@ async def collect_raw_data(
             u.get("username") or u.get("friendly_name", "Unknown")
             for u in users
             if (u.get("username") or u.get("friendly_name", "Unknown"))
-            not in EXCLUDED_USERS
+            not in excluded_users
         ]
 
     all_raw_data = []
     DATA_DIR.mkdir(exist_ok=True)
 
     for i, username in enumerate(usernames, 1):
-        if username in EXCLUDED_USERS:
+        if username in excluded_users:
             continue
 
         cache_path = DATA_DIR / f"{username}_raw_data.json"
@@ -213,9 +214,14 @@ def save_raw_data(all_raw_data: List[Tuple[str, Dict]], cross_user_insights: Dic
     print(f"  → Saved to {DATA_DIR.absolute()}")
 
 
-def load_existing_raw_data() -> Tuple[List[Tuple[str, Dict]], Dict]:
+def load_existing_raw_data(
+    excluded_users: set = None,
+) -> Tuple[List[Tuple[str, Dict]], Dict]:
     """Load previously saved raw data from disk"""
     print("\n📂 Loading existing raw data...")
+
+    if excluded_users is None:
+        excluded_users = set()
 
     if not DATA_DIR.exists():
         raise FileNotFoundError(
@@ -233,7 +239,7 @@ def load_existing_raw_data() -> Tuple[List[Tuple[str, Dict]], Dict]:
     all_raw_data = []
     for path in DATA_DIR.glob("*_raw_data.json"):
         username = path.stem.replace("_raw_data", "")
-        if username in EXCLUDED_USERS:
+        if username in excluded_users:
             continue
         try:
             with open(path, "r") as f:
@@ -383,7 +389,9 @@ async def run_pipeline(args):
 
     elif args.cards_only:
         # Load existing data, regenerate cards (without images)
-        all_raw_data, cross_user_insights = load_existing_raw_data()
+        all_raw_data, cross_user_insights = load_existing_raw_data(
+            set(config.excluded_users)
+        )
         cross_user_insights, cross_analyzer = compute_cross_user_stats(all_raw_data)
         await generate_cards(
             analyzer,

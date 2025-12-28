@@ -29,3 +29,9 @@ time_range:
 # This text is injected into the AI prompt to add flavor/context
 # custom_prompt_context: "This is a family Plex server. Keep the tone friendly and fun!"
 
+# Optional: Users to exclude from wrap generation
+# Useful for system accounts or users who shouldn't get wraps
+# excluded_users:
+#   - Local
+#   - admin
+
