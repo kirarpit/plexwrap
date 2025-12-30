@@ -153,9 +153,21 @@ async def collect_raw_data(
             try:
                 with open(cache_path, "r") as f:
                     raw_data = json.load(f)
-                all_raw_data.append((username, raw_data))
-                print("✅")
-                continue
+
+                # Validate cached data matches current date range
+                cached_start = raw_data.get("period_start")
+                cached_end = raw_data.get("period_end")
+                config_start = analyzer.settings.start_date
+                config_end = analyzer.settings.end_date
+
+                if cached_start != config_start or cached_end != config_end:
+                    print(
+                        f"⚠️ Date range mismatch (cached: {cached_start}-{cached_end}, config: {config_start}-{config_end}), re-fetching..."
+                    )
+                else:
+                    all_raw_data.append((username, raw_data))
+                    print("✅")
+                    continue
             except Exception as e:
                 print(f"⚠️ Cache error, re-fetching: {e}")
 
