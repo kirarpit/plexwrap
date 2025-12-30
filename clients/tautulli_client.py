@@ -17,16 +17,63 @@ class TautulliClient:
         if params:
             request_params.update(params)
 
-        response = self.session.get(url, params=request_params)
-        response.raise_for_status()
-        data = response.json()
+        try:
+            response = self.session.get(url, params=request_params)
+            response.raise_for_status()
+            data = response.json()
 
-        if data.get("response", {}).get("result") == "success":
-            return data.get("response", {}).get("data", {})
-        else:
-            raise Exception(
-                f"Tautulli API error: {data.get('response', {}).get('message', 'Unknown error')}"
-            )
+            if data.get("response", {}).get("result") == "success":
+                return data.get("response", {}).get("data", {})
+            else:
+                raise Exception(
+                    f"Tautulli API error: {data.get('response', {}).get('message', 'Unknown error')}"
+                )
+        except requests.exceptions.ConnectTimeout as e:
+            # Provide helpful Docker networking guidance
+            host = self.base_url.split("://")[-1].split(":")[0] if "://" in self.base_url else self.base_url
+            if host.startswith("172.") or host.startswith("192.168.") or host.startswith("10."):
+                raise Exception(
+                    f"Connection timeout to Tautulli at {self.base_url}. "
+                    f"Docker networking issue detected (using IP address {host}).\n"
+                    f"Solutions:\n"
+                    f"  1. If Tautulli is on the host machine: use 'http://host.docker.internal:8181'\n"
+                    f"  2. If Tautulli is in Docker (same network): use the container/service name instead of IP\n"
+                    f"  3. If Tautulli is in Docker (different network): join the networks or use host.docker.internal\n"
+                    f"  Never use Docker bridge IPs (like {host}) - they change and won't work across networks."
+                ) from e
+            else:
+                raise Exception(
+                    f"Connection timeout to Tautulli at {self.base_url}. "
+                    f"Please verify:\n"
+                    f"  1. Tautulli is running and accessible\n"
+                    f"  2. The URL is correct\n"
+                    f"  3. If running in Docker, use 'host.docker.internal' instead of 'localhost'"
+                ) from e
+        except requests.exceptions.ConnectionError as e:
+            # Provide helpful Docker networking guidance
+            host = self.base_url.split("://")[-1].split(":")[0] if "://" in self.base_url else self.base_url
+            if host == "localhost" or host == "127.0.0.1":
+                raise Exception(
+                    f"Cannot connect to Tautulli at {self.base_url}. "
+                    f"If running in Docker, 'localhost' refers to the container, not the host.\n"
+                    f"Solution: Use 'http://host.docker.internal:8181' if Tautulli is on the host machine, "
+                    f"or use the container/service name if Tautulli is also in Docker."
+                ) from e
+            elif host.startswith("172.") or host.startswith("192.168.") or host.startswith("10."):
+                raise Exception(
+                    f"Cannot connect to Tautulli at {self.base_url}. "
+                    f"Docker networking issue detected (using IP address {host}).\n"
+                    f"Solutions:\n"
+                    f"  1. If Tautulli is on the host machine: use 'http://host.docker.internal:8181'\n"
+                    f"  2. If Tautulli is in Docker (same network): use the container/service name instead of IP\n"
+                    f"  3. If Tautulli is in Docker (different network): join the networks or use host.docker.internal\n"
+                    f"  Never use Docker bridge IPs (like {host}) - they change and won't work across networks."
+                ) from e
+            else:
+                raise Exception(
+                    f"Cannot connect to Tautulli at {self.base_url}. "
+                    f"Please verify Tautulli is running and accessible at this URL."
+                ) from e
 
     def get_users(self) -> List[Dict]:
         """Get all users from Tautulli"""

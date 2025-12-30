@@ -251,7 +251,12 @@ docker-compose up -d --build
 docker-compose down
 ```
 
-> **Note**: If Tautulli runs on the host machine, use `host.docker.internal` instead of `localhost` in config.
+> **Note**: Docker networking configuration depends on where Tautulli is running:
+>
+> - **Tautulli on host machine**: Use `http://host.docker.internal:8181`
+> - **Tautulli in Docker (same network)**: Use `http://tautulli-container-name:8181` (or service name if using docker-compose)
+> - **Tautulli in Docker (different network)**: Either join the networks or use `host.docker.internal` if Tautulli exposes ports to host
+> - **Never use Docker bridge IPs** (like `172.17.0.10`) - they change and won't work across networks
 
 ## API Endpoints
 
@@ -278,7 +283,36 @@ docker-compose down
 
 ### Docker-Specific
 
-- Tautulli on host? Use `host.docker.internal` in config URL
+#### Tautulli Connection Issues
+
+If you're getting connection timeouts when both services are in Docker:
+
+1. **Tautulli on host machine**: Use `http://host.docker.internal:8181` in config
+2. **Tautulli in Docker (same docker-compose)**:
+   - Add Tautulli service to the same `networks` section
+   - Use `http://tautulli-service-name:8181` (the service name from docker-compose)
+3. **Tautulli in Docker (separate docker-compose)**:
+   - Option A: Join networks - add `external_network: tautulli-network` to plexwrap docker-compose
+   - Option B: Use `host.docker.internal:8181` if Tautulli exposes port 8181 to host
+4. **Never use Docker bridge IPs** (like `172.17.0.10`) - they're ephemeral and won't work
+
+Example for same docker-compose:
+
+```yaml
+services:
+  tautulli:
+    # ... your tautulli config
+    networks:
+      - plexwrap-network
+
+  backend:
+    # ... existing config
+    networks:
+      - plexwrap-network
+```
+
+#### Other Docker Issues
+
 - Port conflicts? Change ports in `docker-compose.yml`
 - After code changes: `docker-compose build --no-cache && docker-compose up -d`
 

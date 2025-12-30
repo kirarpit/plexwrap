@@ -3,7 +3,13 @@
 # =============================================================================
 
 tautulli:
-  url: http://localhost:8181
+  # IMPORTANT: Docker Networking Configuration
+  # - If Tautulli is on the HOST machine: use http://host.docker.internal:8181
+  # - If Tautulli is in Docker on the SAME network: use http://tautulli-container-name:8181
+  # - If Tautulli is in Docker on a DIFFERENT network: join networks or use host.docker.internal
+  # - NEVER use Docker bridge IPs like 172.17.0.10 - they change and won't work across networks
+  # - NEVER use localhost from inside Docker - it refers to the container, not the host
+  url: http://localhost:8181  # Change this based on your setup (see above)
   api_key: YOUR_TAUTULLI_API_KEY_HERE
 
 # =============================================================================
