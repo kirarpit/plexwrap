@@ -73,4 +73,4 @@ excluded_users:
 
 # Enable cross-user comparison stats (rankings, percentiles, etc.)
 # When enabled, cards can include comparisons to other users on the server
-# cross_user_comparison: true
+cross_user_comparison: true
