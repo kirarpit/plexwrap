@@ -189,9 +189,13 @@ const WrapDisplay: React.FC<WrapDisplayProps> = ({
     }
   }, [shareToken]);
 
-  // Enter fullscreen when story mode opens
+  // Build card deck using factory (empty array if no data)
+  // Must be defined before the fullscreen useEffect that depends on it
+  const cards = wrapData ? buildCardDeck(wrapData) : [];
+
+  // Enter fullscreen when story mode opens (only if we have cards)
   useEffect(() => {
-    if (!wrapData || loading) return;
+    if (!wrapData || loading || cards.length === 0) return;
 
     const enterFullscreen = async () => {
       try {
@@ -250,9 +254,7 @@ const WrapDisplay: React.FC<WrapDisplayProps> = ({
       };
       exitFullscreen();
     };
-  }, [wrapData, loading]);
-  // Build card deck using factory (empty array if no data)
-  const cards = wrapData ? buildCardDeck(wrapData) : [];
+  }, [wrapData, loading, cards.length]);
 
   // Use swipe hook for navigation (must be called before early returns)
   const {
@@ -278,7 +280,63 @@ const WrapDisplay: React.FC<WrapDisplayProps> = ({
   }
 
   if (!wrapData || cards.length === 0) {
-    return null;
+    // Show error message instead of returning null when cards are missing
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="wrap-container story-mode"
+        style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          flexDirection: 'column',
+          padding: '2rem',
+          textAlign: 'center'
+        }}
+      >
+        <button
+          className="story-close-button"
+          onClick={onBack}
+          aria-label="Close"
+        >
+          ✕
+        </button>
+        <div style={{ 
+          background: 'rgba(0, 0, 0, 0.5)', 
+          borderRadius: '20px', 
+          padding: '2rem',
+          maxWidth: '500px',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)'
+        }}>
+          <span style={{ fontSize: '4rem', display: 'block', marginBottom: '1rem' }}>📭</span>
+          <h2 style={{ marginBottom: '1rem', fontSize: '1.5rem' }}>No Cards Available</h2>
+          <p style={{ opacity: 0.9, lineHeight: 1.6 }}>
+            {wrapData 
+              ? "Your wrap data was found, but no story cards were generated. This might mean the wrap needs to be regenerated with the latest version."
+              : "Unable to load wrap data. Please try again or check if the wrap has been generated."
+            }
+          </p>
+          <button
+            onClick={onBack}
+            style={{
+              marginTop: '1.5rem',
+              padding: '0.75rem 2rem',
+              borderRadius: '25px',
+              border: '2px solid rgba(255, 255, 255, 0.4)',
+              background: 'rgba(255, 255, 255, 0.1)',
+              color: 'white',
+              fontSize: '1rem',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            Go Back
+          </button>
+        </div>
+      </motion.div>
+    );
   }
 
   const currentCard = cards[currentCardIndex];
