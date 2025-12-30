@@ -67,9 +67,9 @@ time_range:
 
 # Users to exclude from wrap generation
 # Useful for system accounts or users who shouldn't get wraps
-# excluded_users:
-#   - Local
-#   - admin
+excluded_users:
+  - Local
+  - admin
 
 # Enable cross-user comparison stats (rankings, percentiles, etc.)
 # When enabled, cards can include comparisons to other users on the server
