@@ -38,7 +38,3 @@ services:
 networks:
   plexwrap-network:
     driver: bridge
-
-volumes:
-  wraps:
-  wraps_data:
