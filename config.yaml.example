@@ -34,8 +34,8 @@ image_generation:
 
 # Time range for the wrap (defaults to last year if not specified)
 time_range:
-  start_date: 2024-01-01
-  end_date: 2024-12-31
+  start_date: 2025-01-01
+  end_date: 2025-12-31
 
 # Timezone for accurate watch time analysis
 # Uses IANA timezone names (e.g., "America/New_York", "Europe/London", "Australia/Sydney")
