@@ -141,6 +141,18 @@ http://yourserver:8765/w/{token}
 
 Each user gets a unique token. Tokens are stored in `data/tokens.json`.
 
+### Display Mode
+
+Control how cards are displayed using the `mode` URL parameter:
+
+| Mode   | URL                    | Description                                  |
+| ------ | ---------------------- | -------------------------------------------- |
+| Auto   | `/w/{token}`           | Prefers AI images if available, else HTML UI |
+| Images | `/w/{token}?mode=img`  | Force AI-generated images (if available)     |
+| HTML   | `/w/{token}?mode=html` | Force traditional HTML/UI cards              |
+
+By default (no `mode` parameter), the app automatically uses AI-generated images when present and falls back to HTML cards otherwise.
+
 ## Getting API Keys
 
 | Service          | Where to Get                                                               |
@@ -154,18 +166,42 @@ Each user gets a unique token. Tokens are stored in `data/tokens.json`.
 The `pregenerate.py` script handles the entire pipeline:
 
 ```bash
-# Full generation (data + LLM cards)
+# Full pipeline for all users (data → LLM cards → images if enabled)
 python pregenerate.py
 
-# Force regenerate all
-python pregenerate.py --force
+# Full pipeline for a single user
+python pregenerate.py <username>
 
-# Data collection only (skip LLM, useful for testing)
+# Force regenerate even if data/wraps already exist
+python pregenerate.py --force
+```
+
+### Pipeline Modes
+
+The generation pipeline has three stages that can be run independently:
+
+| Mode            | Flag            | Description                                     |
+| --------------- | --------------- | ----------------------------------------------- |
+| **Data Only**   | `--data-only`   | Collect raw data from Tautulli, skip LLM/images |
+| **Cards Only**  | `--cards-only`  | Regenerate LLM cards from existing cached data  |
+| **Images Only** | `--images-only` | Generate AI images for existing wraps           |
+
+```bash
+# Stage 1: Collect raw data only (useful for testing API connection)
 python pregenerate.py --data-only
 
-# Single user
-python pregenerate.py <username>
+# Stage 2: Regenerate LLM cards using cached data (skip data collection)
+python pregenerate.py --cards-only
+
+# Stage 3: Generate images for existing wraps (requires image_generation enabled)
+python pregenerate.py --images-only
+
+# Combine with single user
+python pregenerate.py <username> --cards-only
+python pregenerate.py <username> --images-only --force
 ```
+
+> **Note**: Only one mode flag can be used at a time. Running without a mode flag executes the full pipeline.
 
 ### Output Files
 

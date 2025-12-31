@@ -3,7 +3,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    container_name: plexwrap-backend
     ports:
       - "8766:8000"
     volumes:
@@ -26,7 +25,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
-    container_name: plexwrap-frontend
     ports:
       - "8765:80"
     depends_on:
