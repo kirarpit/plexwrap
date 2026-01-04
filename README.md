@@ -370,6 +370,12 @@ curl http://localhost:8766/api/wrap-by-token/YOUR_TOKEN
 - **Image Generation**: Enable sparingly—it adds significant cost but creates stunning visuals
 - **Pre-generate**: Always pre-generate wraps for best performance
 
+## Support
+
+If you find this project useful and would like to support its development, consider:
+
+- ☕ [Buy me a coffee on Ko-fi](https://ko-fi.com/kirarpit)
+
 ## License
 
 MIT
