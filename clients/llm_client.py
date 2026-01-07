@@ -68,6 +68,19 @@ Fun ideas for cards (in no specific sequence!):
 - (must include!)watch age! based on their watching history, how old (no range) are they likely to be?
     - kind: fun, metrics: 'watch_age', ...
 
+Music-specific cards (ONLY include if user has significant music listening data):
+- top artists and music taste
+    - 'top_artists': [{{"name": "Artist Name", "listen_time": 1234}}, ...]
+    - 'top_artist': "Most Played Artist"
+- favorite albums or on-repeat songs
+    - 'top_albums': [{{"name": "Album Name", "listen_time": 567}}, ...]
+    - 'top_tracks': [{{"name": "Song Name", "play_count": 42}}, ...]
+    - 'most_played_track': "Song Title", 'play_count': 42
+- music genres and moods
+    - 'music_genres': [{{"genre": "Rock", "percentage": 35.5}}, ...]
+- total music stats
+    - 'tracks_listened': 534, 'music_listen_time': 1234
+
 Return JSON with a "cards" array. Each card must follow this structure:
 {{
   "id": "unique string identifier",
