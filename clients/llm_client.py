@@ -67,6 +67,7 @@ Fun ideas for cards (in no specific sequence!):
     ...
 - (must include!)watch age! based on their watching history, how old (no range) are they likely to be?
     - kind: fun, metrics: 'watch_age', ...
+- music-specific cards only include if user has significant music listening data
 
 Return JSON with a "cards" array. Each card must follow this structure:
 {{

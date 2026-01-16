@@ -70,6 +70,47 @@ class WrapAnalyzer:
         hours = hours % 24
         return f"{days}d {hours}h" if hours > 0 else f"{days} days"
 
+    def _extract_genres(self, item: Dict) -> List[str]:
+        """Extract genres from an item (handles multiple Tautulli formats)"""
+        item_genres = []
+        # Check direct field first
+        if "genres" in item:
+            item_genres = item.get("genres", []) or []
+        # Check nested media_info structure if direct field is empty
+        if (
+            not item_genres
+            and "media_info" in item
+            and isinstance(item.get("media_info"), dict)
+        ):
+            media_info = item.get("media_info", {})
+            item_genres = media_info.get("genres", []) or []
+        # Handle list of dictionaries (Tautulli format: [{"tag": "Action"}, ...])
+        if (
+            item_genres
+            and isinstance(item_genres, list)
+            and len(item_genres) > 0
+        ):
+            if isinstance(item_genres[0], dict):
+                item_genres = [
+                    g.get("tag", "") for g in item_genres if g.get("tag")
+                ]
+        # Check if it's a string
+        elif isinstance(item_genres, str):
+            item_genres = [
+                g.strip() for g in item_genres.split(",") if g.strip()
+            ]
+        # If still empty, try to fetch from Tautulli using rating_key
+        if not item_genres and item.get("rating_key"):
+            try:
+                metadata = self.tautulli.get_metadata(
+                    str(item.get("rating_key"))
+                )
+                if metadata and metadata.get("genres"):
+                    item_genres = metadata.get("genres", [])
+            except Exception:
+                pass  # Silently fail if metadata fetch fails
+        return item_genres
+
     def calculate_days_between(self, start: str, end: str) -> int:
         """Calculate days between two dates"""
         start_date = datetime.strptime(start, "%Y-%m-%d")
@@ -87,6 +128,8 @@ class WrapAnalyzer:
         items_watched = set()
         episodes_watched = 0
         movies_watched = 0
+        tracks_listened = 0
+        music_listen_time = 0
 
         genres = Counter()
         actors = Counter()
@@ -94,6 +137,12 @@ class WrapAnalyzer:
         content_ratings = Counter()
         devices = Counter()
         platforms = Counter()
+
+        # Music-specific counters
+        artists = Counter()
+        albums = Counter()
+        tracks = Counter()
+        music_genres = Counter()
 
         # Group by date for binge detection
         watches_by_date = defaultdict(list)
@@ -163,9 +212,32 @@ class WrapAnalyzer:
                 )
                 show_title = grandparent_title or title
 
-                # Filter out music tracks - only count TV shows and movies
+                # Handle music tracks separately
                 if media_type == "track":
-                    continue  # Skip music tracks
+                    tracks_listened += 1
+                    music_listen_time += watched_min
+
+                    # Track artist (grandparent_title for music)
+                    artist_name = grandparent_title or item.get("artist", "")
+                    if artist_name:
+                        artists[artist_name] += watched_min
+
+                    # Track album (parent_title for music)
+                    album_name = item.get("parent_title", "") or item.get("album", "")
+                    if album_name:
+                        albums[album_name] += watched_min
+
+                    # Track song
+                    if title:
+                        tracks[title] += watched_min
+
+                    # Track music genres
+                    item_genres = self._extract_genres(item)
+                    for genre in item_genres:
+                        if genre:
+                            music_genres[genre] += watched_min
+
+                    continue  # Skip to next item after processing music
 
                 if media_type == "episode" or "episode" in str(media_type).lower():
                     episodes_watched += 1
@@ -182,44 +254,8 @@ class WrapAnalyzer:
                         movies_watched += 1
                         items_watched.add(title)
 
-                # Extract genres (Tautulli may return as string, list, list of dicts, or nested in media_info)
-                item_genres = []
-                # Check direct field first
-                if "genres" in item:
-                    item_genres = item.get("genres", []) or []
-                # Check nested media_info structure if direct field is empty
-                if (
-                    not item_genres
-                    and "media_info" in item
-                    and isinstance(item.get("media_info"), dict)
-                ):
-                    media_info = item.get("media_info", {})
-                    item_genres = media_info.get("genres", []) or []
-                # Handle list of dictionaries (Tautulli format: [{"tag": "Action"}, ...])
-                if (
-                    item_genres
-                    and isinstance(item_genres, list)
-                    and len(item_genres) > 0
-                ):
-                    if isinstance(item_genres[0], dict):
-                        item_genres = [
-                            g.get("tag", "") for g in item_genres if g.get("tag")
-                        ]
-                # Check if it's a string
-                elif isinstance(item_genres, str):
-                    item_genres = [
-                        g.strip() for g in item_genres.split(",") if g.strip()
-                    ]
-                # If still empty, try to fetch from Tautulli using rating_key
-                if not item_genres and item.get("rating_key"):
-                    try:
-                        metadata = self.tautulli.get_metadata(
-                            str(item.get("rating_key"))
-                        )
-                        if metadata and metadata.get("genres"):
-                            item_genres = metadata.get("genres", [])
-                    except Exception:
-                        pass  # Silently fail if metadata fetch fails
+                # Extract genres
+                item_genres = self._extract_genres(item)
 
                 for genre in item_genres:
                     if genre:
@@ -509,6 +545,35 @@ class WrapAnalyzer:
             daily_watch_times, start_date, end_date
         )
 
+        # Calculate music statistics
+        top_artists = [
+            {"name": name, "listen_time": int(round(time))}
+            for name, time in artists.most_common(10)
+        ]
+        top_albums = [
+            {"name": name, "listen_time": int(round(time))}
+            for name, time in albums.most_common(10)
+        ]
+        top_tracks = [
+            {"name": name, "play_count": int(round(time / 3)) if time > 0 else 1}  # Rough estimate: avg song ~3 min
+            for name, time in tracks.most_common(10)
+        ]
+
+        # Music genre percentages
+        total_music_genre_time = sum(music_genres.values())
+        music_genre_stats = [
+            {
+                "genre": genre,
+                "listen_time": int(round(time)),
+                "percentage": (
+                    (time / total_music_genre_time * 100)
+                    if total_music_genre_time > 0
+                    else 0
+                ),
+            }
+            for genre, time in music_genres.most_common(10)
+        ]
+
         return {
             "total_watch_time": int(round(total_watch_time)),
             "total_items_watched": len(items_watched),
@@ -528,6 +593,13 @@ class WrapAnalyzer:
             "time_of_day": time_of_day_analysis,
             "day_of_week": day_of_week_analysis,
             "consistency": consistency_analysis,
+            # Music statistics
+            "tracks_listened": tracks_listened,
+            "music_listen_time": int(round(music_listen_time)),
+            "top_artists": top_artists,
+            "top_albums": top_albums,
+            "top_tracks": top_tracks,
+            "music_genres": music_genre_stats,
         }
 
     def _detect_binge_sessions(
@@ -958,11 +1030,11 @@ class WrapAnalyzer:
         }
 
     def get_top_content(self, history: List[Dict], limit: int = 10) -> List[Dict]:
-        """Get top watched content"""
+        """Get top watched content (video only - movies and TV shows)"""
         content_ratings = Counter()
 
         for item in history:
-            # Skip music tracks
+            # Skip music tracks for top content
             if item.get("media_type") == "track":
                 continue
 
@@ -1124,6 +1196,13 @@ class WrapAnalyzer:
             "time_of_day": analysis.get("time_of_day", {}),
             "day_of_week": analysis.get("day_of_week", {}),
             "consistency": analysis.get("consistency", {}),
+            # Music statistics
+            "tracks_listened": analysis.get("tracks_listened", 0),
+            "music_listen_time": analysis.get("music_listen_time", 0),
+            "top_artists": analysis.get("top_artists", []),
+            "top_albums": analysis.get("top_albums", []),
+            "top_tracks": analysis.get("top_tracks", []),
+            "music_genres": analysis.get("music_genres", []),
         }
 
         return raw_data
