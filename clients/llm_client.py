@@ -9,9 +9,16 @@ class LLMClient:
         enabled: bool = True,
         name_mappings: Optional[Dict[str, str]] = None,
         custom_prompt_context: Optional[str] = None,
+        base_url: Optional[str] = None,
+        model: Optional[str] = None,
     ):
         self.enabled = enabled and api_key is not None
-        self.client = AsyncOpenAI(api_key=api_key) if self.enabled else None
+        self.model = model or "gpt-5-mini"
+        # Build client kwargs, only include base_url if provided
+        client_kwargs = {"api_key": api_key}
+        if base_url:
+            client_kwargs["base_url"] = base_url
+        self.client = AsyncOpenAI(**client_kwargs) if self.enabled else None
         self.name_mappings = name_mappings or {}
         self.custom_prompt_context = custom_prompt_context
 
@@ -93,7 +100,7 @@ Return JSON with a "cards" array. Each card must follow this structure:
 Remember to make it fun and playful, not creepy.
 """
             response = await self.client.chat.completions.create(
-                model="gpt-5-mini",
+                model=self.model,
                 messages=[
                     {
                         "role": "system",

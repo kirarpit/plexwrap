@@ -17,9 +17,20 @@ tautulli:
 # =============================================================================
 
 # OpenAI API for creative, funny card narratives (highly recommended!)
+# Works with OpenAI API and any OpenAI-compatible API (Anthropic, Ollama, etc.)
 openai:
   api_key: YOUR_OPENAI_API_KEY_HERE
+  # Note: For Ollama (local models), the API key can be any value (e.g., "ollama", "local", etc.)
+  #       Ollama doesn't require authentication, but the field is still required by the client.
   enabled: true  # Set to false to disable LLM features
+  # base_url: https://api.openai.com/v1  # Optional: for OpenAI-compatible APIs
+  #   Examples:
+  #   - Ollama: "http://localhost:11434/v1"
+  #   - Anthropic: "https://api.anthropic.com/v1"
+  # model: gpt-5-mini  # Optional: model name (defaults to "gpt-5-mini")
+  #   Examples:
+  #   - Ollama: "llama3.2", "mistral", "qwen2.5"
+  #   - Anthropic: "claude-3-5-sonnet-20241022"
 
 # AI image generation for cards (uses Google's Imagen model)
 # Creates visually stunning card images but can get expensive at scale

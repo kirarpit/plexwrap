@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     end_date: Optional[str] = None
     openai_api_key: Optional[str] = None
     use_llm: bool = True  # Enable/disable LLM features
+    openai_base_url: Optional[str] = None  # Base URL for OpenAI-compatible APIs
+    openai_model: Optional[str] = None  # Model name (defaults to "gpt-5-mini")
     google_image_api_key: Optional[str] = None
     use_image_generation: bool = False  # Enable/disable image generation
     name_mappings: Dict[str, str] = {}  # Username to display name mappings
@@ -64,6 +66,12 @@ def load_config():
                 "api_key", os.getenv("OPENAI_API_KEY", "")
             ),
             use_llm=config.get("openai", {}).get("enabled", True),
+            openai_base_url=config.get("openai", {}).get(
+                "base_url", os.getenv("OPENAI_BASE_URL")
+            ),
+            openai_model=config.get("openai", {}).get(
+                "model", os.getenv("OPENAI_MODEL")
+            ),
             google_image_api_key=config.get("image_generation", {}).get(
                 "api_key", os.getenv("GOOGLE_IMAGE_API_KEY", "")
             ),

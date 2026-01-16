@@ -30,6 +30,8 @@ class WrapAnalyzer:
             enabled=settings.use_llm,
             name_mappings=settings.name_mappings,
             custom_prompt_context=settings.custom_prompt_context,
+            base_url=settings.openai_base_url,
+            model=settings.openai_model,
         )
         self.image_gen = ImageGenerationClient(
             api_key=settings.google_image_api_key,
