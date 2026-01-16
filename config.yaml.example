@@ -16,8 +16,10 @@ tautulli:
 # AI FEATURES
 # =============================================================================
 
-# OpenAI API for creative, funny card narratives (highly recommended!)
+# OpenAI API for creative, funny card narratives (REQUIRED)
+# The OpenAI API key is required as it generates all the card text from raw data.
 # Works with OpenAI API and any OpenAI-compatible API (Anthropic, Ollama, etc.)
+# Get your key at https://platform.openai.com/api-keys
 openai:
   api_key: YOUR_OPENAI_API_KEY_HERE
   # Note: For Ollama (local models), the API key can be any value (e.g., "ollama", "local", etc.)

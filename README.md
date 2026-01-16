@@ -89,7 +89,8 @@ tautulli:
   url: http://your-tautulli-server:8181
   api_key: YOUR_TAUTULLI_API_KEY
 
-# OpenAI for fun, engaging card text (recommended)
+# OpenAI API key (REQUIRED) - generates the fun, engaging card text
+# Get your key at https://platform.openai.com/api-keys
 openai:
   api_key: YOUR_OPENAI_API_KEY
   enabled: true
