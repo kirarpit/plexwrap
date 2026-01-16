@@ -85,26 +85,16 @@ class WrapAnalyzer:
             media_info = item.get("media_info", {})
             item_genres = media_info.get("genres", []) or []
         # Handle list of dictionaries (Tautulli format: [{"tag": "Action"}, ...])
-        if (
-            item_genres
-            and isinstance(item_genres, list)
-            and len(item_genres) > 0
-        ):
+        if item_genres and isinstance(item_genres, list) and len(item_genres) > 0:
             if isinstance(item_genres[0], dict):
-                item_genres = [
-                    g.get("tag", "") for g in item_genres if g.get("tag")
-                ]
+                item_genres = [g.get("tag", "") for g in item_genres if g.get("tag")]
         # Check if it's a string
         elif isinstance(item_genres, str):
-            item_genres = [
-                g.strip() for g in item_genres.split(",") if g.strip()
-            ]
+            item_genres = [g.strip() for g in item_genres.split(",") if g.strip()]
         # If still empty, try to fetch from Tautulli using rating_key
         if not item_genres and item.get("rating_key"):
             try:
-                metadata = self.tautulli.get_metadata(
-                    str(item.get("rating_key"))
-                )
+                metadata = self.tautulli.get_metadata(str(item.get("rating_key")))
                 if metadata and metadata.get("genres"):
                     item_genres = metadata.get("genres", [])
             except Exception:
@@ -555,7 +545,10 @@ class WrapAnalyzer:
             for name, time in albums.most_common(10)
         ]
         top_tracks = [
-            {"name": name, "play_count": int(round(time / 3)) if time > 0 else 1}  # Rough estimate: avg song ~3 min
+            {
+                "name": name,
+                "play_count": int(round(time / 3)) if time > 0 else 1,
+            }  # Rough estimate: avg song ~3 min
             for name, time in tracks.most_common(10)
         ]
 
@@ -1303,70 +1296,4 @@ class WrapAnalyzer:
             llm_card_descriptions=None,  # Not used anymore
             cards=cards,  # LLM-generated card deck
             raw_data=raw_data,  # Store raw data for reference
-        )
-
-    async def generate_wrap(self, username: str) -> WrapData:
-        """Generate a complete wrap for a user"""
-        # Get user info
-        tautulli_users = self.tautulli.get_users()
-        user_data = next(
-            (
-                u
-                for u in tautulli_users
-                if u.get("username") == username or u.get("friendly_name") == username
-            ),
-            None,
-        )
-
-        if not user_data:
-            raise ValueError(f"User {username} not found")
-
-        user_id = user_data.get("user_id")
-        username = user_data.get("username") or user_data.get("friendly_name")
-
-        # Get watch history
-        history = self.tautulli.get_user_history(
-            user_id=user_id,
-            start_date=self.settings.start_date,
-            end_date=self.settings.end_date,
-        )
-
-        # Analyze history
-        analysis = self.analyze_history(
-            history, self.settings.start_date, self.settings.end_date
-        )
-
-        # Get top content
-        top_content = self.get_top_content(history, limit=10)
-
-        # Get longest binge
-        binge_sessions = analysis.get("binge_sessions", [])
-        longest_binge = binge_sessions[0] if binge_sessions else None
-
-        return WrapData(
-            user=User(
-                id=str(user_id),
-                username=username,
-                title=user_data.get("friendly_name"),
-                thumb=user_data.get("thumb"),
-            ),
-            period={"start": self.settings.start_date, "end": self.settings.end_date},
-            total_watch_time=analysis.get("total_watch_time", 0),
-            total_items_watched=analysis.get("total_items_watched", 0),
-            total_episodes_watched=analysis.get("total_episodes_watched", 0),
-            total_movies_watched=analysis.get("total_movies_watched", 0),
-            insights=[],  # Empty - cards replace this
-            top_genres=analysis.get("genres", [])[:5],
-            top_actors=analysis.get("actors", [])[:5],
-            top_directors=analysis.get("directors", [])[:5],
-            top_content=top_content,
-            devices=analysis.get("devices", [])[:5],
-            platforms=analysis.get("platforms", [])[:5],
-            longest_binge=longest_binge,
-            binge_sessions=binge_sessions[:10],
-            total_requests=0,
-            approved_requests=0,
-            most_requested_genre=None,
-            fun_facts=[],  # Empty - cards replace this
-            llm_card_descriptions=None,  # Not used anymore
         )
