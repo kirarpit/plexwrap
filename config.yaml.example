@@ -13,16 +13,17 @@ tautulli:
   api_key: YOUR_TAUTULLI_API_KEY_HERE
 
 # =============================================================================
-# AI FEATURES
+# REQUIRED - LLM Client for Card Generation
 # =============================================================================
 
-# OpenAI API for creative, funny card narratives (highly recommended!)
+# LLM API is REQUIRED for generating card narratives and content
 # Works with OpenAI API and any OpenAI-compatible API (Anthropic, Ollama, etc.)
+# Without this, the wrap will not have any cards generated.
 openai:
-  api_key: YOUR_OPENAI_API_KEY_HERE
+  api_key: YOUR_OPENAI_API_KEY_HERE  # REQUIRED: API key for LLM service
   # Note: For Ollama (local models), the API key can be any value (e.g., "ollama", "local", etc.)
   #       Ollama doesn't require authentication, but the field is still required by the client.
-  enabled: true  # Set to false to disable LLM features
+  enabled: true  # REQUIRED: Must be true for the application to generate cards
   # base_url: https://api.openai.com/v1  # Optional: for OpenAI-compatible APIs
   #   Examples:
   #   - Ollama: "http://localhost:11434/v1"
@@ -32,9 +33,14 @@ openai:
   #   - Ollama: "llama3.2", "mistral", "qwen2.5"
   #   - Anthropic: "claude-3-5-sonnet-20241022"
 
+# =============================================================================
+# OPTIONAL - AI Image Generation
+# =============================================================================
+
 # AI image generation for cards (uses Google's Imagen model)
 # Creates visually stunning card images but can get expensive at scale
 # Get your API key from https://aistudio.google.com/
+# This is OPTIONAL - cards will work fine without it (using default UI)
 image_generation:
   api_key: YOUR_GOOGLE_AI_API_KEY_HERE
   enabled: false  # Set to true to enable AI-generated card images
