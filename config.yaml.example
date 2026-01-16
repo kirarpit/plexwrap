@@ -16,10 +16,12 @@ tautulli:
 # AI FEATURES
 # =============================================================================
 
-# OpenAI API for creative, funny card narratives (highly recommended!)
+# OpenAI API for creative, funny card narratives (REQUIRED)
+# The OpenAI API key is required as it generates all the card text from raw data.
+# Get your API key from https://platform.openai.com/api-keys
 openai:
-  api_key: YOUR_OPENAI_API_KEY_HERE
-  enabled: true  # Set to false to disable LLM features
+  api_key: YOUR_OPENAI_API_KEY_HERE  # Required
+  enabled: true  # Set to false to disable LLM features (cards won't have text)
 
 # AI image generation for cards (uses Google's Imagen model)
 # Creates visually stunning card images but can get expensive at scale
